@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Un Viaje Astral - Franquicia Villaguay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .neon-border {
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3), inset 0 0 10px rgba(34, 197, 94, 0.1);
+        }
+        .neon-text {
+            text-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+        }
+        .glass-card {
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card:hover {
+            border-color: rgba(34, 197, 94, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="border-b border-gray-800 bg-black/90 sticky top-0 z-40 px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-green-950 border border-green-500 flex items-center justify-center text-green-400 font-bold text-xl">
+                <i class="fa-solid fa-cannabis"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-wider text-white neon-text">UN VIAJE ASTRAL</h1>
+                <p class="text-xs text-green-400 font-medium">Franquicia Villaguay • Entre Ríos</p>
+            </div>
+        </div>
+
+        <div id="userStatus" class="flex items-center space-x-3">
+            <span id="userInfo" class="text-xs text-gray-400 hidden sm:inline"></span>
+            <button id="adminBtn" onclick="toggleAdminPanel()" class="hidden px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-yellow-500/30 rounded-lg transition">
+                <i class="fa-solid fa-user-shield mr-1"></i> Admin
+            </button>
+            <button id="logoutBtn" onclick="logout()" class="hidden px-3 py-1.5 text-xs bg-red-950/60 hover:bg-red-900 text-red-400 border border-red-800/40 rounded-lg transition">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Salir
+            </button>
+        </div>
+    </header>
+
+    <!-- GATEKEEPER / AUTH MODAL (PROTECCIÓN) -->
+    <div id="authOverlay" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-6 rounded-2xl border border-green-500/30 shadow-2xl relative">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-green-900/30 border border-green-500/50 rounded-full flex items-center justify-center mx-auto mb-3 text-green-400 text-2xl">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white tracking-wide">Acceso Privado</h2>
+                <p class="text-xs text-gray-400 mt-1">Exclusivo para asociados registrados de la ONG Un Viaje Astral (Sede Villaguay).</p>
+            </div>
+
+            <!-- Tabs Login / Registro -->
+            <div class="flex border-b border-gray-800 mb-5">
+                <button id="tabLogin" onclick="switchAuthTab('login')" class="w-1/2 py-2 text-sm font-semibold border-b-2 border-green-500 text-green-400">Iniciar Sesión</button>
+                <button id="tabRegister" onclick="switchAuthTab('register')" class="w-1/2 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200">Registrarse</button>
+            </div>
+
+            <!-- Form Iniciar Sesión -->
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">DNI / Usuario</label>
+                    <input type="text" id="loginDni" required placeholder="Ingrese su DNI o usuario" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
+                    <input type="password" id="loginPass" required placeholder="••••••••" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500">
+                </div>
+                <p id="loginError" class="text-xs text-red-400 hidden"><i class="fa-solid fa-circle-exclamation mr-1"></i> Credenciales inválidas.</p>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-black font-bold py-2.5 rounded-lg transition duration-200 shadow-lg shadow-green-900/30">
+                    Ingresar al Dispensario
+                </button>
+            </form>
+
+            <!-- Form Registro de Asociado -->
+            <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Nombre Completo</label>
+                    <input type="text" id="regName" required placeholder="Juan Pérez" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">DNI</label>
+                    <input type="text" id="regDni" required placeholder="12345678" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Teléfono / WhatsApp</label>
+                    <input type="text" id="regPhone" required placeholder="3455-XXXXXX" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Contraseña</label>
+                    <input type="password" id="regPass" required placeholder="Cree su contraseña" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500">
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-black font-bold py-2.5 rounded-lg transition duration-200 mt-2">
+                    Completar Registro de Asociado
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL (DISPENSARIO DE GENÉTICAS) -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+        <div class="mb-8 border-b border-gray-800 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+                <span class="text-xs uppercase tracking-widest text-green-400 font-semibold">Menú Medicinal Privado</span>
+                <h2 class="text-3xl font-extrabold text-white mt-1">Genéticas Disponibles</h2>
+                <p class="text-sm text-gray-400">Seleccione la variedad requerida según su tratamiento.</p>
+            </div>
+            <div class="bg-gray-900/80 px-4 py-2 rounded-xl border border-gray-800 text-xs text-gray-300">
+                <i class="fa-solid fa-location-dot text-green-400 mr-1.5"></i> Sede Villaguay • Despachos 100% confidenciales
+            </div>
+        </div>
+
+        <!-- GRID DE GENÉTICAS -->
+        <div id="geneticsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Renderizado dinámico de genéticas -->
+        </div>
+    </main>
+
+    <!-- MODAL DE PEDIDO Y CARRITO -->
+    <div id="orderModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-lg w-full p-6 rounded-2xl border border-green-500/40 shadow-2xl relative">
+            <button onclick="closeOrderModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <h3 class="text-xl font-bold text-white mb-1" id="modalGenName">Nombre Genética</h3>
+            <p class="text-xs text-green-400 mb-4" id="modalGenRatio">Ratio: THC 18% | CBD 2%</p>
+
+            <form onsubmit="confirmOrder(event)" class="space-y-4">
+                <input type="hidden" id="selectedGenId">
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Cantidad Requerida (Gramos)</label>
+                    <select id="orderQuantity" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500">
+                        <option value="5">5 Gramos</option>
+                        <option value="10">10 Gramos</option>
+                        <option value="15">15 Gramos</option>
+                        <option value="20">20 Gramos</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-2">Modalidad de Entrega</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer border border-gray-700 rounded-xl p-3 bg-gray-900 hover:border-green-500 flex items-center space-x-2">
+                            <input type="radio" name="deliveryMethod" value="Retiro en Sede" checked onclick="toggleAddressField(false)" class="text-green-500 focus:ring-0">
+                            <div>
+                                <p class="text-xs font-bold text-white">Retiro en Sede</p>
+                                <p class="text-[10px] text-gray-400">Coordinar entrega</p>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer border border-gray-700 rounded-xl p-3 bg-gray-900 hover:border-green-500 flex items-center space-x-2">
+                            <input type="radio" name="deliveryMethod" value="Envío a Domicilio" onclick="toggleAddressField(true)" class="text-green-500 focus:ring-0">
+                            <div>
+                                <p class="text-xs font-bold text-white">Envío Domicilio</p>
+                                <p class="text-[10px] text-gray-400">En Villaguay</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="addressField" class="hidden">
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Dirección de Entrega</label>
+                    <input type="text" id="deliveryAddress" placeholder="Calle, número y barrio en Villaguay" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Notas adicionales (Opcional)</label>
+                    <textarea id="orderNotes" rows="2" placeholder="Indicaciones para la entrega o retiro..." class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded-lg transition duration-200 shadow-lg shadow-green-900/40 mt-2">
+                    Confirmar Pedido de Medicina
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PANEL DE ADMINISTRADOR MODAL -->
+    <div id="adminModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-4xl w-full p-6 rounded-2xl border border-yellow-500/30 max-h-[90vh] flex flex-col relative">
+            <button onclick="toggleAdminPanel()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center justify-between pb-4 border-b border-gray-800 mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-yellow-400 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders"></i> Panel de Control Admin
+                    </h3>
+                    <p class="text-xs text-gray-400">Gestión interna - Un Viaje Astral Villaguay</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="downloadLogFile('patients')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-green-400 text-xs rounded-lg border border-green-500/30 flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-arrow-down"></i> Descargar Pacientes (.txt)
+                    </button>
+                    <button onclick="downloadLogFile('orders')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-yellow-400 text-xs rounded-lg border border-yellow-500/30 flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-arrow-down"></i> Descargar Encomiendas (.txt)
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto flex-1 space-y-6 pr-2">
+                <!-- SECCIÓN PEDIDOS -->
+                <div>
+                    <h4 class="text-sm font-bold text-white mb-3 uppercase tracking-wider text-xs border-b border-gray-800 pb-1">
+                        <i class="fa-solid fa-boxes-packing text-yellow-400 mr-1"></i> Pedidos Recientes
+                    </h4>
+                    <div id="adminOrdersList" class="space-y-2">
+                        <!-- Renderizado de pedidos -->
+                    </div>
+                </div>
+
+                <!-- SECCIÓN PACIENTES -->
+                <div>
+                    <h4 class="text-sm font-bold text-white mb-3 uppercase tracking-wider text-xs border-b border-gray-800 pb-1">
+                        <i class="fa-solid fa-users text-green-400 mr-1"></i> Pacientes Registrados
+                    </h4>
+                    <div id="adminPatientsList" class="space-y-2">
+                        <!-- Renderizado de pacientes -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-900 bg-black py-4 text-center text-xs text-gray-500">
+        <p>© Un Viaje Astral • Franquicia Villaguay | Presidida por Gonzalo Bustos Cardozo</p>
+        <p class="text-[10px] text-gray-600 mt-1">Plataforma privada de expendio y gestión de cannabis medicinal para asociados.</p>
+    </footer>
+
+    <!-- LOGIC JS -->
+    <script>
+        // DATOS EN MEMORIA (LOCALSTORAGE)
+        const DEFAULT_GENETICS = [
+            { id: 1, name: "Astral Sativa Special", ratio: "THC 20% | CBD 1%", type: "Sativa Dominante", desc: "Variedad de alto rendimiento aromático, ideal para uso diurno y estimulación del apetito.", notes: "Terpenos: Limoneno / Pineno" },
+            { id: 2, name: "Villaguay Indica Relax", ratio: "THC 15% | CBD 5%", type: "Indica Dominante", desc: "Efecto físico profundo y relajante muscular. Muy recomendada para insomnio.", notes: "Terpenos: Mirceno / Linalool" },
+            { id: 3, name: "CBD Balance Astral", ratio: "THC 8% | CBD 12%", type: "Híbrida Equilibrada", desc: "Proporción equilibrada medicinal. Alivio del dolor sin efectos psicoactivos marcados.", notes: "Terpenos: Cariofileno" }
+        ];
+
+        let currentUser = null;
+
+        // Inicializar datos en localStorage si no existen
+        function initData() {
+            if (!localStorage.getItem('uva_patients')) {
+                const defaultPatients = [
+                    { dni: 'admin', name: 'Administrador General', phone: '000000', pass: 'admin123', isAdmin: true },
+                    { dni: '35123456', name: 'Paciente Demo', phone: '3455112233', pass: '1234', isAdmin: false }
+                ];
+                localStorage.setItem('uva_patients', JSON.stringify(defaultPatients));
+            }
+            if (!localStorage.getItem('uva_orders')) {
+                localStorage.setItem('uva_orders', JSON.stringify([]));
+            }
+        }
+
+        initData();
+
+        // RENDERIZAR GENÉTICAS
+        function renderGenetics() {
+            const container = document.getElementById('geneticsGrid');
+            container.innerHTML = DEFAULT_GENETICS.map(g => `
+                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition hover:-translate-y-1 duration-200">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-950 text-green-400 border border-green-800">${g.type}</span>
+                            <span class="text-[11px] font-mono text-gray-400">${g.ratio}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">${g.name}</h3>
+                        <p class="text-xs text-gray-300 mb-3">${g.desc}</p>
+                        <p class="text-[11px] text-gray-500 italic mb-4"><i class="fa-solid fa-leaf text-green-600 mr-1"></i>${g.notes}</p>
+                    </div>
+                    <button onclick="openOrderModal(${g.id})" class="w-full bg-green-950 hover:bg-green-600 text-green-400 hover:text-black font-semibold border border-green-600/40 py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-xs">
+                        <i class="fa-solid fa-basket-shopping"></i> Encargar Medicina
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // CONTROL AUTH / PANELES
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const regForm = document.getElementById('registerForm');
+            const tabLogin = document.getElementById('tabLogin');
+            const tabReg = document.getElementById('tabRegister');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                tabLogin.className = "w-1/2 py-2 text-sm font-semibold border-b-2 border-green-500 text-green-400";
+                tabReg.className = "w-1/2 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200";
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                tabReg.className = "w-1/2 py-2 text-sm font-semibold border-b-2 border-green-500 text-green-400";
+                tabLogin.className = "w-1/2 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200";
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const dni = document.getElementById('loginDni').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const patients = JSON.parse(localStorage.getItem('uva_patients') || '[]');
+
+            const user = patients.find(p => p.dni === dni && p.pass === pass);
+            if (user) {
+                currentUser = user;
+                document.getElementById('authOverlay').classList.add('hidden');
+                document.getElementById('userInfo').innerText = `Paciente: ${user.name}`;
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                if (user.isAdmin) {
+                    document.getElementById('adminBtn').classList.remove('hidden');
+                }
+                renderGenetics();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const dni = document.getElementById('regDni').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const pass = document.getElementById('regPass').value.trim();
+
+            let patients = JSON.parse(localStorage.getItem('uva_patients') || '[]');
+            if (patients.some(p => p.dni === dni)) {
+                alert('El DNI ya se encuentra registrado como asociado.');
+                return;
+            }
+
+            const newPatient = { dni, name, phone, pass, isAdmin: false, date: new Date().toLocaleDateString() };
+            patients.push(newPatient);
+            localStorage.setItem('uva_patients', JSON.stringify(patients));
+
+            currentUser = newPatient;
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('userInfo').innerText = `Paciente: ${newPatient.name}`;
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            alert('Registro exitoso. Bienvenido a la ONG Un Viaje Astral Villaguay.');
+            renderGenetics();
+        }
+
+        function logout() {
+            currentUser = null;
+            location.reload();
+        }
+
+        // PEDIDOS
+        function openOrderModal(genId) {
+            const gen = DEFAULT_GENETICS.find(g => g.id === genId);
+            document.getElementById('selectedGenId').value = gen.id;
+            document.getElementById('modalGenName').innerText = gen.name;
+            document.getElementById('modalGenRatio').innerText = gen.ratio;
+            document.getElementById('orderModal').classList.remove('hidden');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.add('hidden');
+        }
+
+        function toggleAddressField(show) {
+            const field = document.getElementById('addressField');
+            if (show) field.classList.remove('hidden');
+            else field.classList.add('hidden');
+        }
+
+        function confirmOrder(e) {
+            e.preventDefault();
+            const genId = parseInt(document.getElementById('selectedGenId').value);
+            const gen = DEFAULT_GENETICS.find(g => g.id === genId);
+            const qty = document.getElementById('orderQuantity').value;
+            const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked').value;
+            const address = document.getElementById('deliveryAddress').value;
+            const notes = document.getElementById('orderNotes').value;
+
+            const newOrder = {
+                id: Date.now(),
+                patientName: currentUser.name,
+                patientDni: currentUser.dni,
+                patientPhone: currentUser.phone,
+                genetics: gen.name,
+                quantity: `${qty}g`,
+                deliveryMethod: deliveryMethod,
+                address: deliveryMethod === 'Envío a Domicilio' ? address : 'N/A (Retira en Sede)',
+                notes: notes || 'Sin notas',
+                date: new Date().toLocaleString(),
+                status: 'Pendiente'
+            };
+
+            let orders = JSON.parse(localStorage.getItem('uva_orders') || '[]');
+            orders.unshift(newOrder);
+            localStorage.setItem('uva_orders', JSON.stringify(orders));
+
+            closeOrderModal();
+            alert('¡Encargo registrado con éxito! El pedido ha sido notificado al dispensario de Villaguay.');
+        }
+
+        // ADMIN PANEL
+        function toggleAdminPanel() {
+            const modal = document.getElementById('adminModal');
+            if (modal.classList.contains('hidden')) {
+                renderAdminData();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function renderAdminData() {
+            const orders = JSON.parse(localStorage.getItem('uva_orders') || '[]');
+            const patients = JSON.parse(localStorage.getItem('uva_patients') || '[]');
+
+            const ordersContainer = document.getElementById('adminOrdersList');
+            if (orders.length === 0) {
+                ordersContainer.innerHTML = `<p class="text-xs text-gray-500 py-2">No hay encargo registrados aún.</p>`;
+            } else {
+                ordersContainer.innerHTML = orders.map(o => `
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 flex flex-col md:flex-row justify-between md:items-center text-xs gap-2">
+                        <div>
+                            <span class="font-bold text-yellow-400">${o.genetics} (${o.quantity})</span>
+                            <p class="text-gray-300">Paciente: ${o.patientName} - DNI: ${o.patientDni} - Tel: ${o.patientPhone}</p>
+                            <p class="text-gray-400">Modalidad: <span class="text-white font-semibold">${o.deliveryMethod}</span> | Dir: ${o.address}</p>
+                            <p class="text-gray-500 text-[10px]">${o.date} | Nota: ${o.notes}</p>
+                        </div>
+                        <div>
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${o.status === 'Pendiente' ? 'bg-yellow-950 text-yellow-400 border border-yellow-800' : 'bg-green-950 text-green-400 border border-green-800'}">${o.status}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            const patientsContainer = document.getElementById('adminPatientsList');
+            patientsContainer.innerHTML = patients.map(p => `
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 flex justify-between items-center text-xs">
+                    <div>
+                        <p class="font-bold text-white">${p.name} ${p.isAdmin ? '<span class="text-yellow-400 text-[10px]">(ADMIN)</span>' : ''}</p>
+                        <p class="text-gray-400">DNI: ${p.dni} | Tel: ${p.phone}</p>
+                    </div>
+                    <span class="text-[10px] text-gray-500"><i class="fa-solid fa-user-check text-green-500 mr-1"></i>Asociado</span>
+                </div>
+            `).join('');
+        }
+
+        // DESCARGA EN BLOC DE NOTAS (.TXT)
+        function downloadLogFile(type) {
+            let fileContent = "";
+            let fileName = "";
+
+            if (type === 'patients') {
+                const patients = JSON.parse(localStorage.getItem('uva_patients') || '[]');
+                fileName = "registro_pacientes_villaguay.txt";
+                fileContent = "===================================================
+";
+                fileContent += " UN VIAJE ASTRAL - REGISTRO DE PACIENTES ASOCIADOS
+";
+                fileContent += " Franquicia Villaguay • Presidente: Gonzalo Bustos Cardozo
+";
+                fileContent += "===================================================
+
+";
+
+                patients.forEach((p, idx) => {
+                    fileContent += `[${idx + 1}] Nombre: ${p.name}
+`;
+                    fileContent += `    DNI: ${p.dni}
+`;
+                    fileContent += `    Teléfono: ${p.phone}
+`;
+                    fileContent += `    Rol: ${p.isAdmin ? 'ADMINISTRADOR' : 'PACIENTE ASOCIADO'}
+`;
+                    fileContent += `---------------------------------------------------
+`;
+                });
+            } else if (type === 'orders') {
+                const orders = JSON.parse(localStorage.getItem('uva_orders') || '[]');
+                fileName = "registro_encargos_villaguay.txt";
+                fileContent = "===================================================
+";
+                fileContent += " UN VIAJE ASTRAL - REGISTRO DE ENCARGOS / MEDICA
+";
+                fileContent += " Franquicia Villaguay • Dispensario Privado
+";
+                fileContent += "===================================================
+
+";
+
+                orders.forEach((o, idx) => {
+                    fileContent += `[${idx + 1}] ID Pedido: ${o.id}
+`;
+                    fileContent += `    Fecha: ${o.date}
+`;
+                    fileContent += `    Paciente: ${o.patientName} (DNI: ${o.patientDni})
+`;
+                    fileContent += `    Contacto: ${o.patientPhone}
+`;
+                    fileContent += `    Medicina: ${o.genetics} - Cantidad: ${o.quantity}
+`;
+                    fileContent += `    Modalidad: ${o.deliveryMethod}
+`;
+                    fileContent += `    Dirección: ${o.address}
+`;
+                    fileContent += `    Notas: ${o.notes}
+`;
+                    fileContent += `    Estado: ${o.status}
+`;
+                    fileContent += `---------------------------------------------------
+`;
+                });
+            }
+
+            const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+        }
+    </script>
+</body>
+</html>
